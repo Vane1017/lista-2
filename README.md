@@ -1,5 +1,5 @@
 # lista-2
-## Entradas
+## Entradas de exemplo
 <ul>
   <li><b>Questão 1 - </b> [101,10,20,55,30,1,9,10,99,35]</li>
   <li><b>Questão 2 - </b> [101,10,20,55,30,1,9,10,99,35]</li>
