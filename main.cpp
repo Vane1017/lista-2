@@ -152,10 +152,10 @@ int convexHull(int lista[100][2], int n, int pontos_casca[100][2]) {
 
 }
 
-void addEdge(int ii, int jj, int matrizAdjacencias[100][100])
+void addEdge(int ii, int jj, int matrizAdjacencias[100][100], int peso)
 {
-    matrizAdjacencias[ii][jj] = 1; // add edge a lista
-    matrizAdjacencias[jj][ii] = 1; // add edge a lista
+    matrizAdjacencias[ii][jj] = peso; // add edge a lista
+    matrizAdjacencias[jj][ii] = peso; // add edge a lista
 }
 
 int dfs_recursive(int v, int contador,int matrizAdjacencias[100][100], int visitados[100], int numVertices){
@@ -210,6 +210,7 @@ int bfs_recursive(int v, int contador,int matrizAdjacencias[100][100], int visit
 	}
 	return contador;
 }
+
 //questão 10 - Implemente o algoritmo de busca em profundidade
 void BFS(int matrizAdjacencias[100][100], int numVertices){
     int visitados[numVertices] = {0}, ii;
@@ -222,6 +223,108 @@ void BFS(int matrizAdjacencias[100][100], int numVertices){
     for(ii=0;ii<numVertices;ii++){
         cout << ii << " - " << visitados[ii] << endl;
     }
+}
+
+
+int calcula_custo_rota(int *lista,int n, int matrizAdjacencias[100][100]){
+    int jj, custo = 0;
+    for (jj = 0; jj < n; jj++) {
+        if(jj==0){
+            custo +=   matrizAdjacencias[lista[jj]][0];
+            if(matrizAdjacencias[lista[jj]][0] == 0){
+                return -1;
+            }
+        }
+        else{
+            custo +=  matrizAdjacencias[lista[jj-1]][lista[jj]];
+            if(matrizAdjacencias[lista[jj-1]][lista[jj]] == 0){
+                return -1;
+            }
+        }
+    }
+    custo +=  matrizAdjacencias[0][lista[n-1]];
+    return custo;
+}
+
+int gerar_permutacoes_cidades(int *lista,int n, int matrizAdjacencias[100][100],int *lista_reposta){
+    int c[100] = {0}, ii, aux, jj, custo, custo_aux;
+    custo = calcula_custo_rota(lista,n,matrizAdjacencias);
+    if(custo != -1){
+        for (jj = 0; jj < n; jj++) {
+            lista_reposta[jj] = lista[jj];
+        }
+    }
+    ii = 0;
+    while(ii<n){
+        if (c[ii] < ii){
+            if (ii%2 == 0){
+                aux  = lista[0];
+                lista[0] = lista[ii];
+                lista[ii] = aux;
+            }
+            else{
+                aux  = lista[c[ii]];
+                lista[c[ii]] = lista[ii];
+                lista[ii] = aux;
+            }
+
+            custo_aux = calcula_custo_rota(lista,n,matrizAdjacencias);
+            if ((custo_aux<custo)&&(custo_aux != -1)){
+                for (jj = 0; jj < n; jj++) {
+                    lista_reposta[jj] = lista[jj];
+                }
+                custo = custo_aux;
+            }
+            c[ii]++;
+            ii = 0;
+        }
+        else{
+            c[ii] = 0;
+            ii++;
+        }
+    }
+    return custo;
+}
+
+
+int func_gerar_variacoe(int *peso,int *ganho,int *itens_selecionado,int tamanho_mochila,int numero)
+{
+    int ii = 0, teste, aux_ori, aux, resto=0, peso_atual, ganho_atual;
+    int lista[100] ={0}, jj = 0, kk=0, maior_ganho =-1;
+    for (ii = pow(2,numero)-1; ii >= 0; ii--) {
+        aux= ii;
+        peso_atual = 0;
+        ganho_atual = 0;
+        for (jj = numero; jj > 0; jj--){
+            if (aux % 2 == 0){
+                lista[jj-1] = 0;
+            }
+            else{
+                lista[jj-1] = 1;
+                peso_atual+=peso[jj-1];
+                ganho_atual+=ganho[jj-1];
+            }
+            aux = aux / 2;
+        }
+        if ((peso_atual <= tamanho_mochila)&&(maior_ganho < ganho_atual)){
+            maior_ganho = ganho_atual;
+            for (kk = 0; kk < numero; kk++) {
+                itens_selecionado[kk] = lista[kk];
+            }
+        }
+    }
+    return maior_ganho;
+}
+
+int gerar_rotas(int matrizAdjacencias[100][100], int num_vertices, int *lista_reposta)
+{
+    int ii;
+    int lista[100] = {0};
+    for (ii = 0; ii < num_vertices; ii++) {
+        lista[ii] = ii+1;
+    }
+    int custo = gerar_permutacoes_cidades(lista,num_vertices,matrizAdjacencias, lista_reposta);
+    return custo;
 }
 
 int main(){
@@ -281,21 +384,68 @@ int main(){
     for (ii=0;ii<num_pontos;ii++){
         cout << "(" << pontos_casca[ii][0] << ", " << pontos_casca[ii][1] <<")" << endl;
     }
-    cout << "9 - Implementar o algoritmo de busca em largura!" << endl;
-    int numVertices = 6;
-    int matrizAdjacencias[100][100] = {0};
-    //addEdge
-    addEdge(0,1,matrizAdjacencias);
-    addEdge(0,2,matrizAdjacencias);
-    addEdge(1,3,matrizAdjacencias);
-    addEdge(2,4,matrizAdjacencias);
-    addEdge(2,5,matrizAdjacencias);
 
-    DFS(matrizAdjacencias, numVertices);
+    int matrizAdjacencias[100][100] = {0}, lista[100] = {0}, lista_reposta[100] = {0};
+
+    addEdge(0,1,matrizAdjacencias,10);
+    addEdge(0,2,matrizAdjacencias,15);
+    addEdge(0,3,matrizAdjacencias,16);
+    addEdge(0,4,matrizAdjacencias,1);
+    addEdge(0,5,matrizAdjacencias,9);
+    addEdge(1,2,matrizAdjacencias,8);
+    addEdge(1,3,matrizAdjacencias,7);
+    addEdge(1,4,matrizAdjacencias,15);
+    addEdge(1,5,matrizAdjacencias,9);
+    addEdge(2,3,matrizAdjacencias,7);
+    addEdge(2,4,matrizAdjacencias,9);
+    addEdge(2,5,matrizAdjacencias,8);
+    addEdge(3,4,matrizAdjacencias,9);
+    addEdge(3,5,matrizAdjacencias,10);
+    addEdge(4,5,matrizAdjacencias,11);
+    int num_vertices = 4;
+
+    int custo = gerar_rotas(matrizAdjacencias,num_vertices,lista_reposta);
+
+    cout << "7 - Implemente uma solucao baseada em busca exaustiva para o problema do Caixeiro Viajante!" << endl;
+    cout << "Custo = "<< custo << endl;
+    printf("Rota: 0 -> ");
+    for (ii = 0; ii < num_vertices; ii++) {
+        printf("%d -> ",lista_reposta[ii]);
+    }
+    printf("0\n");
+
+    cout << "8 - Implemente uma solucao baseada em busca exaustiva para o problema da mochila!" << endl;
+    int peso[100] = {10,15,2,30,55};
+    int ganho[100] = {5, 8, 8, 1, 20};
+    int itens_selecionado[100] = {0};
+    int tamanho_mochila = 56, num_itens = 5, maior_ganho,kk;
+    maior_ganho = func_gerar_variacoe(peso,ganho,itens_selecionado,tamanho_mochila,num_itens);
+    if(maior_ganho == -1){
+        cout << "Sem resultado valido" << endl;
+    }
+    else{
+        cout << "Melhor ganho = " << maior_ganho << endl;
+        for (kk = 0; kk < num_itens; kk++) {
+            printf("%d - ",itens_selecionado[kk]);
+        }
+        printf("\n");
+    }
+
+    cout << "9 - Implementar o algoritmo de busca em largura!" << endl;
+    int numVertices2 = 6;
+    int matrizAdjacencias2[100][100] = {0};
+    //addEdge
+    addEdge(0,1,matrizAdjacencias2,1);
+    addEdge(0,2,matrizAdjacencias2,1);
+    addEdge(1,3,matrizAdjacencias2,1);
+    addEdge(2,4,matrizAdjacencias2,1);
+    addEdge(2,5,matrizAdjacencias2,1);
+
+    DFS(matrizAdjacencias2, numVertices2);
 
 
     cout << "10 - Implementar o algoritmo de busca em profundidade!" << endl;
-    BFS(matrizAdjacencias, numVertices);
+    BFS(matrizAdjacencias2, numVertices2);
 
     return 0;
 }
